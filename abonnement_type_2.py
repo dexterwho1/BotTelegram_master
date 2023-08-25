@@ -7,9 +7,10 @@ bot = telebot.TeleBot(TOKEN)
 
 user_data = {}
 lists = [
-    ["Élément 1-1", "Élément 1-2", "Élément 1-3"],
-    ["Élément 2-1", "Élément 2-2", "Élément 2-3"],
-    ["Élément 3-1", "Élément 3-2", "Élément 3-3"]
+    ["Une européenne", "Une asiatique", "Une africaine","Une arabe"],
+    ["18-25 ans une étudiante bien coquine", "25-30 ans une jeune maman qui veut s'amuser", "30 50 ans une mère de famille seule qui a besoin d'affection","-50 et plus une mature accro au sexe"],
+    ["Plusieurs fois par jours", "une fois par jour", "plusieurs fois par semaine"],
+    ["dans un cinéma", "dans une voiture", "dans une cabine d'essayage", "dans un avion"]
 ]
 
 
