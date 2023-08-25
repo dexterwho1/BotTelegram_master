@@ -1,0 +1,56 @@
+import telebot
+from telebot import types
+
+TOKEN = '6490536043:AAGIZndJZLbuILBa8kJCHafxsqNU9IeTe8c'
+bot = telebot.TeleBot(TOKEN)
+
+user_data = {}
+lists = [
+    ["dominer", "te faire dominer", "à voir selon le moment"],
+    ["que je prenne les devants", "que tu prennes les devant", "à voir selon le moment"],
+]
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    user_id = message.from_user.id
+    user_data[user_id] = {"list_index": 0, "element_index": 0}
+    send_list(user_id)
+
+
+def send_list(user_id):
+    list_index = user_data[user_id]["list_index"]
+    element_index = user_data[user_id]["element_index"]
+    current_list = lists[list_index]
+
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    for element in current_list:
+        button = types.InlineKeyboardButton(element, callback_data=element)
+        markup.add(button)
+
+    if "message_id" in user_data[user_id]:
+        bot.edit_message_text(chat_id=user_id, message_id=user_data[user_id]["message_id"],
+                              text="Sélectionnez un élément :", reply_markup=markup)
+    else:
+        sent_message = bot.send_message(user_id, "Sélectionnez un élément :", reply_markup=markup)
+        user_data[user_id]["message_id"] = sent_message.message_id
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_handler(call):
+    user_id = call.from_user.id
+    list_index = user_data[user_id]["list_index"]
+    current_list = lists[list_index]
+
+    if call.data in current_list:
+        user_data[user_id]["element_index"] = 0
+        user_data[user_id]["list_index"] += 1
+        if user_data[user_id]["list_index"] >= len(lists):
+            user_data[user_id]["list_index"] = 0
+
+    send_list(user_id)
+    bot.answer_callback_query(call.id)
+
+
+if __name__ == "__main__":
+    bot.polling()
