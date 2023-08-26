@@ -34,8 +34,9 @@ lists = [
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.from_user.id
-    user_data[user_id] = {"list_index": 0, "element_index": 0}
+    user_data[user_id] = {"list_index": 0, "element_index": 0, "answers": {}}
     process_list(user_id, False)
+
 
 def process_list(user_id, edit):
     list_index = user_data[user_id]['list_index']
@@ -89,9 +90,65 @@ def send_list_with_buttons(user_id, edit_message):
 def send_text_prompt(user_id):
     bot.send_message(user_id, lists[user_data[user_id]['list_index']]['name'])
 
+
 @bot.message_handler(func=lambda message: lists[user_data[message.chat.id]['list_index']]['type'] == 'text')
 def text_response(message):
     user_id = message.chat.id
+    # Stockage des réponses pour le type 'text'
+    user_data[user_id]["answers"][lists[user_data[user_id]['list_index']]['name']] = message.text
+
+    user_data[user_id]['list_index'] += 1
+
+    if user_data[user_id]['list_index'] < len(lists):
+        process_list(user_id, False)
+    else:
+        print("---- Début des réponses ----")
+        print(f"User ID: {user_id}")
+        print("Réponses :")
+        for question, answer in user_data[user_id]["answers"].items():
+            print(f"{question}: {answer}")
+        print("---- Fin des réponses ----")
+
+
+# ... Votre code existant ...
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_handler(call):
+    user_id = call.from_user.id
+    list_index = user_data[user_id]['list_index']
+    current_list = lists[list_index]
+    element_index = user_data[user_id]['element_index']
+
+    if call.data == "prev":
+        user_data[user_id]['element_index'] -= 1
+    elif call.data == "next":
+        user_data[user_id]['element_index'] += 1
+    elif call.data == "confirm":
+        # Stockage des réponses pour le type 'list'
+        user_data[user_id]["answers"][current_list['name']] = current_list['values'][element_index]
+        user_data[user_id]['list_index'] += 1
+        user_data[user_id]['element_index'] = 0
+    elif call.data in current_list['values']:
+        # Stockage des réponses pour le type 'button'
+        user_data[user_id]["answers"][current_list['name']] = call.data
+        user_data[user_id]['list_index'] += 1
+
+    if user_data[user_id]['list_index'] < len(lists):
+        process_list(user_id, True)
+    else:
+        print("---- Début des réponses ----")
+        print(f"User ID: {user_id}")
+        print("Réponses :")
+        for question, answer in user_data[user_id]["answers"].items():
+            print(f"{question}: {answer}")
+        print("---- Fin des réponses ----")
+        bot.send_message(user_id, "Merci pour vos réponses!")
+
+@bot.message_handler(func=lambda message: lists[user_data[message.chat.id]['list_index']]['type'] == 'text')
+def text_response(message):
+    user_id = message.chat.id
+    # Stockage des réponses pour le type 'text'
+    user_data[user_id]["answers"][lists[user_data[user_id]['list_index']]['name']] = message.text
     user_data[user_id]['list_index'] += 1
 
     if user_data[user_id]['list_index'] < len(lists):
@@ -99,31 +156,6 @@ def text_response(message):
     else:
         bot.send_message(user_id, "Merci pour vos réponses!")
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_handler(call):
-    user_id = call.from_user.id
-    list_index = user_data[user_id]['list_index']
-    element_index = user_data[user_id]['element_index']
-    current_list = lists[list_index]['values']
-
-    if call.data == "prev" and element_index > 0:
-        user_data[user_id]['element_index'] -= 1
-    elif call.data == "next":
-        if element_index < len(current_list) - 1:
-            user_data[user_id]['element_index'] += 1
-        else:
-            user_data[user_id]['list_index'] += 1
-            user_data[user_id]['element_index'] = 0
-    elif call.data == "confirm":
-        user_data[user_id]['list_index'] += 1
-        user_data[user_id]['element_index'] = 0
-    elif call.data in current_list:
-        user_data[user_id]['list_index'] += 1
-
-    if user_data[user_id]['list_index'] < len(lists):
-        process_list(user_id, True)
-    else:
-        bot.send_message(user_id, "Merci pour vos réponses!")
 
 if __name__ == "__main__":
     bot.polling()
