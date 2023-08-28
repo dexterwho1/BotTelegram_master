@@ -1,6 +1,6 @@
 import telebot
 from telebot import types
-
+from connect_database_abonnement_2 import save_to_database
 TOKEN = '6490536043:AAGIZndJZLbuILBa8kJCHafxsqNU9IeTe8c'
 bot = telebot.TeleBot(TOKEN)
 
@@ -102,6 +102,8 @@ def text_response(message):
     if user_data[user_id]['list_index'] < len(lists):
         process_list(user_id, False)
     else:
+        save_to_database(user_id, user_data[user_id]["answers"]) # Appeler la fonction ici
+
         print("---- Début des réponses ----")
         print(f"User ID: {user_id}")
         print("Réponses :")
@@ -133,6 +135,10 @@ def callback_handler(call):
         user_data[user_id]["answers"][current_list['name']] = call.data
         user_data[user_id]['list_index'] += 1
 
+        # Éditer le message pour enlever les boutons
+        bot.edit_message_text(text=current_list['name'] + " : " + call.data, chat_id=user_id,
+                              message_id=call.message.message_id)
+
     if user_data[user_id]['list_index'] < len(lists):
         process_list(user_id, True)
     else:
@@ -144,6 +150,7 @@ def callback_handler(call):
         print("---- Fin des réponses ----")
         bot.send_message(user_id, "Merci pour vos réponses!")
 
+
 @bot.message_handler(func=lambda message: lists[user_data[message.chat.id]['list_index']]['type'] == 'text')
 def text_response(message):
     user_id = message.chat.id
@@ -154,6 +161,7 @@ def text_response(message):
     if user_data[user_id]['list_index'] < len(lists):
         process_list(user_id, False)
     else:
+        save_to_database(user_id, user_data[user_id]["answers"]) # Appeler la fonction ici
         bot.send_message(user_id, "Merci pour vos réponses!")
 
 
