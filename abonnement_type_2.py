@@ -31,14 +31,10 @@ lists = [
 ]
 
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    user_id = message.from_user.id
-    user_data[user_id] = {"list_index": 0, "element_index": 0, "answers": {}}
-    process_list(user_id, False)
 
 
 def process_list(user_id, edit):
+    print("lllm")
     list_index = user_data[user_id]['list_index']
 
     if lists[list_index]['type'] == 'list':
@@ -165,5 +161,4 @@ def text_response(message):
         bot.send_message(user_id, "Merci pour vos réponses!")
 
 
-if __name__ == "__main__":
-    bot.polling()
+

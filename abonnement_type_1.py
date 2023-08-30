@@ -2,11 +2,29 @@ import sqlite3
 import telebot
 from telebot import types
 import sqlite3
+DATABASE = 'C:/Users/Pro/AppData/Roaming/DBeaverData/workspace6/.metadata/sample-database-sqlite-1/Chinook.db'
+
 from psychologie import *
+
+from abonnement_type_2 import user_data
+from abonnement_type_2 import lists
+from abonnement_type_2 import process_list
 TOKEN = '6490536043:AAGIZndJZLbuILBa8kJCHafxsqNU9IeTe8c'
 bot = telebot.TeleBot(TOKEN)
 user_states = {}
 
+def get_new_type(user_id):
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    query = "SELECT new FROM user WHERE id_user = ?"
+    cursor.execute(query, (user_id,))
+
+    result = cursor.fetchone()
+
+    conn.close()
+
+    return result[0] if result else None
 
 def question_1(user_id):
     bot.send_message(user_id,
@@ -132,25 +150,30 @@ def question_27(user_id):
 
 
 def abonnement_1_main(user_id,message):
-    response=[]
-    # Votre logique pour l'abonnement de type 1
-    if user_id not in user_states:
-        # Si l'utilisateur est nouveau, initiez le questionnaire
-        message_de_presentation(user_id)
-        user_states[user_id] = {"current_question": 1, "answers": {}}
-        question_1(user_id)
-    else:
-        # Sinon, traitez la réponse de l'utilisateur
-        current_question = user_states[user_id]["current_question"]
-        user_states[user_id]["answers"][current_question] = message.text
-        next_question = current_question + 1
-        if next_question <= 19:
-            user_states[user_id]["current_question"] = next_question
-            question_funcs[next_question](user_id)
+    typit=get_new_type(user_id)
+    if typit==0:
+        response=[]
+        # Votre logique pour l'abonnement de type 1
+        if user_id not in user_states:
+            # Si l'utilisateur est nouveau, initiez le questionnaire
+            message_de_presentation(user_id)
+            user_states[user_id] = {"current_question": 1, "answers": {}}
+            question_1(user_id)
         else:
-            # L'utilisateur a terminé le questionnaire, faites ce que vous voulez ensuite ici.
-            print(user_states[user_id])
-            resumeemotionnel(user_id, user_states[user_id])
+            # Sinon, traitez la réponse de l'utilisateur
+            current_question = user_states[user_id]["current_question"]
+            user_states[user_id]["answers"][current_question] = message.text
+            next_question = current_question + 1
+            if next_question <= 19:
+                user_states[user_id]["current_question"] = next_question
+                question_funcs[next_question](user_id)
+            else:
+                # L'utilisateur a terminé le questionnaire, faites ce que vous voulez ensuite ici.
+                print(user_states[user_id])
+                user_id = message.from_user.id
+                user_data[user_id] = {"list_index": 0, "element_index": 0, "answers": {}}
+                process_list(user_id, False)
+                #resumeemotionnel(user_id, user_states[user_id])
 
 
 def send_message(user_id, message):
